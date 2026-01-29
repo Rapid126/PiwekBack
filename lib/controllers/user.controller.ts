@@ -2,6 +2,7 @@ import { Request, Response, Router } from 'express';
 import Controller from '../interfaces/controller.interface';
 import User from '../modules/schemas/user.schema';
 import jwt from 'jsonwebtoken';
+import { config } from '../config'; // Importujemy centralną konfigurację
 
 class UserController implements Controller {
     public path = '/api/user';
@@ -21,18 +22,23 @@ class UserController implements Controller {
         const { login, password } = request.body;
 
         try {
-            // Szukamy użytkownika po emailu (używamy pola login z formularza jako email)
+            // Szukamy użytkownika po emailu
             const user = await User.findOne({ email: login });
             
             if (!user) {
                 return response.status(401).json({ error: 'Użytkownik nie istnieje' });
             }
 
-            // Sprawdzamy hasło (w prawdziwej aplikacji powinno być hashowane!)
+            // Weryfikacja hasła
             if (user.password === password) {
                 const token = this.createToken(user);
-                // Zwracamy token i dane użytkownika
-                response.send({ token, login: user.email, userId: user._id, name: user.name });
+                // Zwracamy token i dane, w tym _id z MongoDB
+                response.send({ 
+                    token, 
+                    login: user.email, 
+                    userId: user._id, 
+                    name: user.name 
+                });
             } else {
                 response.status(401).json({ error: 'Błędne hasło' });
             }
@@ -46,28 +52,28 @@ class UserController implements Controller {
         try {
             const user = new User(userData);
             await user.save();
-            // Po udanej rejestracji nie musimy od razu logować, zwracamy sukces
             response.status(200).json(user);
         } catch (error) {
-            // Błąd najczęściej oznacza, że email jest już zajęty
             response.status(400).json({ error: 'Email zajęty lub błędne dane' });
         }
     };
 
     private logout = (request: Request, response: Response) => {
-        // Backend stateless nie musi nic robić przy wylogowaniu,
-        // ale endpoint musi istnieć, żeby Angular nie rzucał błędu 404.
         response.status(200).send();
     }
 
     private createToken(user: any): string {
         const expiresIn = 60 * 60; // 1 godzina
-        const secret = 'SekretnyKluczAPI'; // W produkcji trzymaj to w pliku .env!
+        
+        // ZMIANA: Pobieramy wspólny klucz z pliku config.ts
+        const secret = config.JwtSecret; 
+        
         const dataStoredInToken = {
-            _id: user._id,
+            _id: user._id, // Identyfikator użytkownika zapisywany w tokenie
             email: user.email,
             name: user.name
         };
+
         return jwt.sign(dataStoredInToken, secret, { expiresIn });
     }
 }

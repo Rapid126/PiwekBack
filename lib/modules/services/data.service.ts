@@ -5,11 +5,19 @@ class DataService {
     public async createPost(postParams: IData) {
         try {
             const dataModel = new PostModel(postParams);
-            // ZWRACAMY wynik zapisu, aby otrzymać obiekt z nadanym przez MongoDB _id
             return await dataModel.save(); 
         } catch (error) {
-            console.error('Wystąpił błąd podczas tworzenia danych:', error);
+            console.error('Błąd tworzenia danych:', error);
             throw new Error('Wystąpił błąd podczas tworzenia danych');
+        }
+    }
+
+    // DODANO METODĘ UPDATE
+    public async update(id: string, postParams: Partial<IData>) {
+        try {
+            return await PostModel.findByIdAndUpdate(id, postParams, { new: true });
+        } catch (error) {
+            throw new Error(`Błąd aktualizacji posta: ${error}`);
         }
     }
 

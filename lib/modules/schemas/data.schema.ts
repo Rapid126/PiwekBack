@@ -1,10 +1,11 @@
 import { Schema, model } from 'mongoose';
-import { IData } from "../models/data.model";
+import { IData } from '../models/data.model';
 
-export const DataSchema: Schema = new Schema({
-   title: { type: String, required: true },
-   text: { type: String, required: true },
-   image: { type: String, required: true },
+const PostSchema = new Schema<IData>({
+    title: { type: String, required: true },
+    text: { type: String, required: true },
+    image: { type: String, required: false },
+    userId: { type: String, required: true } // Obowiązkowe powiązanie
 });
 
-export default model('Post-KO', DataSchema);
+export default model<IData>('Post', PostSchema);
