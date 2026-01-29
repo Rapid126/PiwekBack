@@ -3,8 +3,6 @@ import { Request, Response, NextFunction, Router } from 'express';
 import { checkPostCount } from '../middlewares/checkPostCount.middleware';
 import DataService from '../modules/services/data.service';
 
-let testArr = [4, 5, 6, 3, 5, 3, 7, 5, 13, 5, 6, 4, 3, 6, 3, 6];
-
 class PostController implements Controller {
     public path = '/api/post';
     public pathPlural = '/api/posts';
@@ -20,54 +18,48 @@ class PostController implements Controller {
         this.router.get(`${this.path}/latest`, this.getAll);
         this.router.post(`${this.path}/take/:num`, checkPostCount, this.getNPosts);
 
+        // Operacje na pojedynczym poście (/api/post)
         this.router.post(this.path, this.addData);
         this.router.get(`${this.path}/:id`, this.getElementById);
         this.router.delete(`${this.path}/:id`, this.removePost);
         
+        // Operacje na wielu postach (/api/posts)
         this.router.get(this.pathPlural, this.getAllPosts);
         this.router.delete(this.pathPlural, this.deleteAllPosts);
     }
 
-    private getAll = async (request: Request, response: Response, next: NextFunction) => {
-        response.status(200).json(testArr);
+    private getAll = async (request: Request, response: Response) => {
+        response.status(200).json([4, 5, 6]); // Twoja testowa tablica
     };
 
-    private getNPosts = async (request: Request, response: Response, next: NextFunction) => {
+    private getNPosts = async (request: Request, response: Response) => {
         const { num } = request.params;
         const count = parseInt(num, 10);
-        if (isNaN(count) || count <= 0) {
-             return response.status(400).json({ error: 'Podano nieprawidłową liczbę elementów.' });
-        }
-        const elements = testArr.slice(0, count);
+        const elements = [4, 5, 6, 3, 5].slice(0, count);
         response.status(200).json(elements);
     };
 
-    private addData = async (request: Request, response: Response, next: NextFunction) => {
-    const { title, text, image } = request.body;
-    try {
-        // Zapisz w bazie i odbierz gotowy obiekt z nadanym ID
-        const newPost = await this.dataService.createPost({ title, text, image });
-        response.status(200).json(newPost); // Odsyłamy obiekt z ID
-    } catch (error: any) {
-        response.status(400).json({ error: 'Invalid input data.' });
-    }
-};
+    private addData = async (request: Request, response: Response) => {
+        const { title, text, image } = request.body;
+        try {
+            const newPost = await this.dataService.createPost({ title, text, image });
+            response.status(200).json(newPost);
+        } catch (error: any) {
+            response.status(400).json({ error: 'Invalid input data.' });
+        }
+    };
 
-    private getElementById = async (request: Request, response: Response, next: NextFunction) => {
+    private getElementById = async (request: Request, response: Response) => {
         const { id } = request.params;
         try {
             const post = await this.dataService.getById(id);
-            if (!post) {
-                response.status(404).json({ error: 'Post not found' });
-            } else {
-                response.status(200).json(post);
-            }
+            post ? response.status(200).json(post) : response.status(404).json({ error: 'Post not found' });
         } catch (error) {
             response.status(500).json({ error: 'Server error' });
         }
     };
 
-    private removePost = async (request: Request, response: Response, next: NextFunction) => {
+    private removePost = async (request: Request, response: Response) => {
         const { id } = request.params;
         try {
             await this.dataService.deleteById(id);
@@ -77,7 +69,7 @@ class PostController implements Controller {
         }
     };
 
-    private getAllPosts = async (request: Request, response: Response, next: NextFunction) => {
+    private getAllPosts = async (request: Request, response: Response) => {
         try {
             const allPosts = await this.dataService.query({});
             response.status(200).json(allPosts);
@@ -86,10 +78,10 @@ class PostController implements Controller {
         }
     };
 
-    private deleteAllPosts = async (request: Request, response: Response, next: NextFunction) => {
+    private deleteAllPosts = async (request: Request, response: Response) => {
         try {
             await this.dataService.deleteAllPosts();
-            response.status(200).json({ message: 'Wszystkie posty z bazy usunięte.' });
+            response.status(200).json({ message: 'Wszystkie posty usunięte.' });
         } catch (error) {
             response.status(500).json({ error: 'Failed to delete posts' });
         }
