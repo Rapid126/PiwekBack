@@ -18,16 +18,12 @@ class App {
     }
 
     private initializeMiddlewares(): void {
-        // 1. CORS - pozwala Angularowi (localhost:4200) gadać z Backendem
         this.app.use(cors());
         
-        // 2. BodyParser - pozwala czytać JSON-y z requestów
         this.app.use(bodyParser.json());
         
-        // 3. Logger - Twoja własna middleware
         this.app.use(logger);
         
-        // 4. Morgan - loguje każde zapytanie w konsoli (bardzo przydatne przy debugowaniu!)
         this.app.use(morgan('dev')); 
     }
 
@@ -53,7 +49,6 @@ class App {
             console.log('MongoDB disconnected');
         });
 
-        // Bezpieczne zamykanie połączenia przy wyłączaniu aplikacji
         process.on('SIGINT', async () => {
             await mongoose.connection.close();
             console.log('MongoDB connection closed due to app termination');

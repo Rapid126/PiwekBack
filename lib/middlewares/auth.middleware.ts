@@ -14,10 +14,8 @@ const auth = (request: Request, response: Response, next: NextFunction) => {
   try {
     const decoded = jwt.verify(token, config.secret) as any;
     
-    // --- TU SPRAWDZASZ SWOJE ID ---
     console.log('--- AUTH MIDDLEWARE: Token zweryfikowany pomyślnie ---');
     console.log('Zdekodowane dane z tokena:', decoded); 
-    // Zobacz w konsoli, czy tam jest "_id", czy "userId"
     
     (request as any).user = decoded; 
     next();

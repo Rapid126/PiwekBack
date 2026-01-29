@@ -12,7 +12,6 @@ class DataService {
         }
     }
 
-    // DODANO METODĘ UPDATE
     public async update(id: string, postParams: Partial<IData>) {
         try {
             return await PostModel.findByIdAndUpdate(id, postParams, { new: true });
@@ -53,7 +52,7 @@ class DataService {
         }
     }
     public async addLike(postId: string, userId: string) {
-    // $addToSet dodaje element tylko jeśli go tam nie ma (unikamy duplikatów)
+
     return await PostModel.findByIdAndUpdate(
         postId, 
         { $addToSet: { likes: userId } }, 
@@ -62,7 +61,7 @@ class DataService {
 }
 
 public async removeLike(postId: string, userId: string) {
-    // $pull usuwa element z tablicy
+
     return await PostModel.findByIdAndUpdate(
         postId, 
         { $pull: { likes: userId } }, 

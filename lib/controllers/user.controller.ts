@@ -63,13 +63,13 @@ class UserController implements Controller {
     }
 
     private createToken(user: any): string {
-        const expiresIn = 60 * 60; // 1 godzina
+        const expiresIn = 60 * 60; 
         
-        // ZMIANA: Pobieramy wspólny klucz z pliku config.ts
+
         const secret = config.JwtSecret; 
         
         const dataStoredInToken = {
-            _id: user._id, // Identyfikator użytkownika zapisywany w tokenie
+            _id: user._id, 
             email: user.email,
             name: user.name
         };

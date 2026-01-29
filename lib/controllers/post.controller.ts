@@ -18,24 +18,20 @@ class PostController implements Controller {
         this.router.get(`${this.path}/latest`, this.getAll);
         this.router.post(`${this.path}/take/:num`, checkPostCount, this.getNPosts);
 
-        // --- NOWA TRASA: Toggle Like (wymaga logowania) ---
         this.router.patch(`${this.path}/like/:id`, auth, this.toggleLike);
 
-        // Operacje zabezpieczone tokenem (wymagają logowania)
         this.router.post(this.path, auth, this.addData);
         this.router.put(`${this.path}/:id`, auth, this.updatePost);
         this.router.delete(`${this.path}/:id`, auth, this.removePost);
         
-        // Operacje publiczne
         this.router.get(`${this.path}/:id`, this.getElementById);
         this.router.get(this.pathPlural, this.getAllPosts);
         this.router.delete(this.pathPlural, auth, this.deleteAllPosts);
     }
 
-    // --- NOWA METODA: System Polubień ---
     private toggleLike = async (request: Request, response: Response) => {
         const { id } = request.params;
-        const userId = (request as any).user?._id; // Pobieramy ID zalogowanego usera
+        const userId = (request as any).user?._id; 
 
         try {
             const post = await this.dataService.getById(id);
@@ -43,16 +39,13 @@ class PostController implements Controller {
                 return response.status(404).json({ error: 'Post nie istnieje.' });
             }
 
-            // Sprawdzamy, czy użytkownik już polubił ten post
-            // (Używamy optional chaining ?. na wypadek gdyby tablica likes była undefined)
+
             const alreadyLiked = post.likes?.includes(String(userId));
 
             let updatedPost;
             if (alreadyLiked) {
-                // Jeśli ma lajka -> usuwamy
                 updatedPost = await this.dataService.removeLike(id, userId);
             } else {
-                // Jeśli nie ma -> dodajemy
                 updatedPost = await this.dataService.addLike(id, userId);
             }
 
@@ -68,7 +61,6 @@ class PostController implements Controller {
         const userId = (request as any).user?._id;
 
         try {
-            // Dodajemy likes: [] przy tworzeniu posta
             const newPost = await this.dataService.createPost({ 
                 title, 
                 text, 

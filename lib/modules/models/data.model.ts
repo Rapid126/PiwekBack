@@ -3,7 +3,7 @@ export interface IData {
    text: string;
    image: string;
    userId: string;
-   likes: string[]; // <--- DODAJ TĘ LINIĘ
+   likes: string[];
 }
 
 export type Query<T> = {
