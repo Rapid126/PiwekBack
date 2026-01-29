@@ -52,6 +52,23 @@ class DataService {
             throw new Error(`Error deleting all posts: ${error}`);
         }
     }
+    public async addLike(postId: string, userId: string) {
+    // $addToSet dodaje element tylko jeśli go tam nie ma (unikamy duplikatów)
+    return await PostModel.findByIdAndUpdate(
+        postId, 
+        { $addToSet: { likes: userId } }, 
+        { new: true }
+    );
+}
+
+public async removeLike(postId: string, userId: string) {
+    // $pull usuwa element z tablicy
+    return await PostModel.findByIdAndUpdate(
+        postId, 
+        { $pull: { likes: userId } }, 
+        { new: true }
+    );
+}
 }
 
 export default DataService;

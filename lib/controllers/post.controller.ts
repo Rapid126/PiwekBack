@@ -2,7 +2,7 @@ import Controller from '../interfaces/controller.interface';
 import { Request, Response, Router } from 'express';
 import { checkPostCount } from '../middlewares/checkPostCount.middleware';
 import DataService from '../modules/services/data.service';
-import auth from '../middlewares/auth.middleware'; // <--- PAMIĘTAJ O TYM IMPORCIE
+import auth from '../middlewares/auth.middleware';
 
 class PostController implements Controller {
     public path = '/api/post';
@@ -18,6 +18,9 @@ class PostController implements Controller {
         this.router.get(`${this.path}/latest`, this.getAll);
         this.router.post(`${this.path}/take/:num`, checkPostCount, this.getNPosts);
 
+        // --- NOWA TRASA: Toggle Like (wymaga logowania) ---
+        this.router.patch(`${this.path}/like/:id`, auth, this.toggleLike);
+
         // Operacje zabezpieczone tokenem (wymagają logowania)
         this.router.post(this.path, auth, this.addData);
         this.router.put(`${this.path}/:id`, auth, this.updatePost);
@@ -29,12 +32,50 @@ class PostController implements Controller {
         this.router.delete(this.pathPlural, auth, this.deleteAllPosts);
     }
 
-    private addData = async (request: Request, response: Response) => {
-        const { title, text, image } = request.body;
-        const userId = (request as any).user?._id; // Pobieramy _id zalogowanego usera
+    // --- NOWA METODA: System Polubień ---
+    private toggleLike = async (request: Request, response: Response) => {
+        const { id } = request.params;
+        const userId = (request as any).user?._id; // Pobieramy ID zalogowanego usera
 
         try {
-            const newPost = await this.dataService.createPost({ title, text, image, userId });
+            const post = await this.dataService.getById(id);
+            if (!post) {
+                return response.status(404).json({ error: 'Post nie istnieje.' });
+            }
+
+            // Sprawdzamy, czy użytkownik już polubił ten post
+            // (Używamy optional chaining ?. na wypadek gdyby tablica likes była undefined)
+            const alreadyLiked = post.likes?.includes(String(userId));
+
+            let updatedPost;
+            if (alreadyLiked) {
+                // Jeśli ma lajka -> usuwamy
+                updatedPost = await this.dataService.removeLike(id, userId);
+            } else {
+                // Jeśli nie ma -> dodajemy
+                updatedPost = await this.dataService.addLike(id, userId);
+            }
+
+            response.status(200).json(updatedPost);
+        } catch (error) {
+            console.error(error);
+            response.status(500).json({ error: 'Błąd podczas zmieniania statusu polubienia.' });
+        }
+    };
+
+    private addData = async (request: Request, response: Response) => {
+        const { title, text, image } = request.body;
+        const userId = (request as any).user?._id;
+
+        try {
+            // Dodajemy likes: [] przy tworzeniu posta
+            const newPost = await this.dataService.createPost({ 
+                title, 
+                text, 
+                image, 
+                userId, 
+                likes: [] 
+            });
             response.status(200).json(newPost);
         } catch (error: any) {
             response.status(400).json({ error: 'Invalid input data.' });
@@ -47,7 +88,6 @@ class PostController implements Controller {
 
         try {
             const post = await this.dataService.getById(id);
-            // Sprawdzenie czy edytujący to autor
             if (post && post.userId !== String(userId)) {
                 return response.status(403).json({ error: 'Nie jesteś autorem tego posta!' });
             }

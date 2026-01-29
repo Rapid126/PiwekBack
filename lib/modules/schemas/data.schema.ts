@@ -5,7 +5,8 @@ const PostSchema = new Schema<IData>({
     title: { type: String, required: true },
     text: { type: String, required: true },
     image: { type: String, required: false },
-    userId: { type: String, required: true } // Obowiązkowe powiązanie
+    userId: { type: String, required: true },
+    likes: { type: [String], default: [] } // <--- DODAJ TĘ LINIĘ
 });
 
 export default model<IData>('Post', PostSchema);
